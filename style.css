@@ -6,7 +6,7 @@ a{color:var(--green);text-decoration:none}
 button{font:inherit;cursor:pointer}
 .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
 .pos{color:var(--green)}.neg{color:var(--red)}.muted{color:var(--muted)}
-.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:84px}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 
 /* top bar */
 .top{background:var(--green);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 16px;display:flex;flex-direction:column;gap:14px}
