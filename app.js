@@ -19,7 +19,7 @@ const T = {
     saved: 'Saved', cost: 'Cost', net: 'Net so far', quarters: '{n} quarters', cash: 'cash settled', everyQ: 'Every quarter', swaps: 'Swaps in place',
     swap: 'Swap {n}', mtm: 'Market value of the swaps (not cash)', gainYear: 'Change this year', aed: 'AED', signout: 'Sign out', update: 'Update screen',
     chpw: 'Change password', oldpw: 'Current password', newpw: 'New password (8+ characters)', save: 'Save', cancel: 'Cancel', pwdone: 'Password changed.',
-    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
+    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', fixedAt: 'fixed {r}%', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
     pairTitle: 'This phone is not set up', pairBody: 'Ask the finance team in the office for your QR code and scan it with the iPhone camera.', installHint: 'Set up. Now tap Share, then Add to Home Screen, and open the app from the new icon.',
     badKey: 'This phone needs a new QR code from the office.', thisPhone: 'This phone', offlineR: 'No connection. Showing the last position received.'
   },
@@ -41,7 +41,7 @@ const T = {
     saved: 'وفورات', cost: 'تكلفة', net: 'الصافي حتى الآن', quarters: '{n} أرباع', cash: 'نقداً', everyQ: 'كل ربع سنة', swaps: 'عقود المقايضة القائمة',
     swap: 'مقايضة {n}', mtm: 'القيمة السوقية للمقايضات (غير نقدية)', gainYear: 'التغير هذا العام', aed: 'درهم', signout: 'تسجيل الخروج', update: 'شاشة التحديث',
     chpw: 'تغيير كلمة المرور', oldpw: 'كلمة المرور الحالية', newpw: 'كلمة المرور الجديدة (8 أحرف أو أكثر)', save: 'حفظ', cancel: 'إلغاء', pwdone: 'تم تغيير كلمة المرور.',
-    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
+    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', fixedAt: 'ثابت {r}%', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
     pairTitle: 'هذا الهاتف غير مُعد', pairBody: 'اطلب رمز QR الخاص بك من فريق المالية في المكتب وامسحه بكاميرا الآيفون.', installHint: 'تم الإعداد. اضغط على مشاركة ثم إضافة إلى الشاشة الرئيسية، وافتح التطبيق من الأيقونة الجديدة.',
     badKey: 'يحتاج هذا الهاتف إلى رمز QR جديد من المكتب.', thisPhone: 'هذا الهاتف', offlineR: 'لا يوجد اتصال. يتم عرض آخر موقف تم استلامه.'
   }
@@ -188,7 +188,7 @@ function hedging() {
       ${H.map(q => `<div class="qbar" dir="ltr"><b>${dstr(q.quarter_end, {month: 'short', year: '2-digit'})}</b>
         <div class="neg-side">${q.amount < 0 ? `<span class="neg num">${fmt(q.amount)}</span><i style="width:${Math.abs(q.amount) / mx * 100}%"></i>` : ''}</div>
         <div class="pos-side">${q.amount > 0 ? `<i style="width:${q.amount / mx * 100}%"></i><span class="pos num">${fmt(q.amount, true)}</span>` : ''}</div></div>`).join('')}</div></div>
-    <div class="sec"><div class="sec-h">${t('swaps')}</div><div class="card">${D.swaps.map((s, i) => `<div class="row"><div class="l"><b>${t('swap', {n: i + 1})}</b><small class="num">${esc(s.ref)}</small></div><div class="r">${N(s.notional)}</div></div>`).join('')}</div></div>
+    <div class="sec"><div class="sec-h">${t('swaps')}</div><div class="card">${D.swaps.map((s, i) => `<div class="row"><div class="l"><b>${t('swap', {n: i + 1})}</b><small class="num">${esc(s.ref)}${s.rate ? ' · ' + t('fixedAt', {r: s.rate}) : ''}</small>${s.start || s.end ? `<small>${dstr(s.start, {month: 'short', year: 'numeric'})} – ${dstr(s.end, {month: 'short', year: 'numeric'})}</small>` : ''}</div><div class="r">${N(s.notional)}</div></div>`).join('')}</div></div>
     ${m0 ? `<div class="sec"><div class="sec-h">${t('mtm')}</div><div class="card">${M.map(m => `<div class="row"><div class="l"><b>${dstr(m.date)}</b></div><div class="r ${m.value < 0 ? 'neg' : 'pos'}">${N(m.value, true)}</div></div>`).join('')}
       ${M.length > 1 ? `<div class="row"><div class="l"><small>${t('gainYear')}</small></div><div class="r ${m1.value - m0.value < 0 ? 'neg' : 'pos'}">${N(m1.value - m0.value, true)}</div></div>` : ''}</div></div>` : ''}</div>`;
 }
