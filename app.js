@@ -19,7 +19,7 @@ const T = {
     saved: 'Saved', cost: 'Cost', net: 'Net so far', quarters: '{n} quarters', cash: 'cash settled', everyQ: 'Every quarter', swaps: 'Swaps in place',
     swap: 'Swap {n}', mtm: 'Market value of the swaps (not cash)', gainYear: 'Change this year', aed: 'AED', signout: 'Sign out', update: 'Update screen',
     chpw: 'Change password', oldpw: 'Current password', newpw: 'New password (8+ characters)', save: 'Save', cancel: 'Cancel', pwdone: 'Password changed.',
-    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
+    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
     pairTitle: 'This phone is not set up', pairBody: 'Ask the finance team in the office for your QR code and scan it with the iPhone camera.', installHint: 'Set up. Now tap Share, then Add to Home Screen, and open the app from the new icon.',
     badKey: 'This phone needs a new QR code from the office.', thisPhone: 'This phone', offlineR: 'No connection. Showing the last position received.'
   },
@@ -41,7 +41,7 @@ const T = {
     saved: 'وفورات', cost: 'تكلفة', net: 'الصافي حتى الآن', quarters: '{n} أرباع', cash: 'نقداً', everyQ: 'كل ربع سنة', swaps: 'عقود المقايضة القائمة',
     swap: 'مقايضة {n}', mtm: 'القيمة السوقية للمقايضات (غير نقدية)', gainYear: 'التغير هذا العام', aed: 'درهم', signout: 'تسجيل الخروج', update: 'شاشة التحديث',
     chpw: 'تغيير كلمة المرور', oldpw: 'كلمة المرور الحالية', newpw: 'كلمة المرور الجديدة (8 أحرف أو أكثر)', save: 'حفظ', cancel: 'إلغاء', pwdone: 'تم تغيير كلمة المرور.',
-    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
+    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
     pairTitle: 'هذا الهاتف غير مُعد', pairBody: 'اطلب رمز QR الخاص بك من فريق المالية في المكتب وامسحه بكاميرا الآيفون.', installHint: 'تم الإعداد. اضغط على مشاركة ثم إضافة إلى الشاشة الرئيسية، وافتح التطبيق من الأيقونة الجديدة.',
     badKey: 'يحتاج هذا الهاتف إلى رمز QR جديد من المكتب.', thisPhone: 'هذا الهاتف', offlineR: 'لا يوجد اتصال. يتم عرض آخر موقف تم استلامه.'
   }
@@ -62,6 +62,8 @@ const loc = () => lang === 'ar' ? 'ar-AE-u-nu-latn' : 'en-GB';
 const dstr = (iso, o) => iso ? new Date(iso.length === 10 ? iso + 'T12:00:00' : iso).toLocaleDateString(loc(), o || {day: 'numeric', month: 'short', year: 'numeric'}) : '';
 const dlong = iso => dstr(iso, {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
 const tstr = iso => iso ? new Date(iso).toLocaleTimeString(lang === 'ar' ? 'ar-AE-u-nu-latn' : 'en-GB', {hour: '2-digit', minute: '2-digit'}) : '';
+// several days when the last publish was before yesterday (e.g. Monday: Fri - Sun)
+const period = () => D.movement_from && D.movement_from < D.movement_date ? dstr(D.movement_from, {weekday: 'short', day: 'numeric', month: 'short'}) + ' – ' + dstr(D.movement_date, {weekday: 'short', day: 'numeric', month: 'short'}) : null;
 const bank = b => lang === 'ar' ? (BANK_AR[b] || b) : b;
 
 async function api(path, opt) {
@@ -105,7 +107,7 @@ function home() {
     <div class="float"><div><div class="k">${t('free')}</div><div class="v">${N(D.free)}</div></div><div><div class="k">${t('available')}</div><div class="v">${N(D.available)}</div></div>
       <div><div class="k">${t('blocked')}</div><div class="v neg">${N(D.blocked)}</div></div></div>
     <div class="wrap">
-      <div class="sec"><div class="sec-h">${t('yesterday')} · ${dstr(D.movement_date, {weekday: 'long', day: 'numeric', month: 'long'})}<a href="#inout">${t('details')}</a></div>
+      <div class="sec"><div class="sec-h">${period() ? t('sinceLast') + ' · ' + period() : t('yesterday') + ' · ' + dstr(D.movement_date, {weekday: 'long', day: 'numeric', month: 'long'})}<a href="#inout">${t('details')}</a></div>
         <div class="grid2"><a class="tile" href="#inout"><div class="k pos">${t('in')}</div><div class="v">${N(D.in_total, true)}</div><div class="s">${t('receipts', {n: D.in_count})}</div></a>
           <a class="tile" href="#inout"><div class="k neg">${t('out')}</div><div class="v">${N(-D.out_total)}</div><div class="s">${t('payments', {n: D.out_count})}</div></a></div></div>
       <div class="sec"><div class="sec-h">${t('byco')}</div><a class="card" href="#banks" style="color:inherit">
@@ -126,7 +128,8 @@ function banks() {
 }
 
 function inout() {
-  return screenHead(t('inTitle'), dlong(D.movement_date)) + `<div class="wrap">
+  const days = D.by_day && D.by_day.length > 1 ? `<div class="sec"><div class="sec-h">${t('byDay')}</div><div class="card">${D.by_day.map(x => `<div class="row"><div class="l"><b>${dstr(x.date, {weekday: 'long', day: 'numeric', month: 'short'})}</b></div><div class="r"><span class="pos">${N(x.in, true)}</span> &nbsp; <span class="neg">${N(-x.out)}</span></div></div>`).join('')}</div></div>` : '';
+  return screenHead(t('inTitle'), period() || dlong(D.movement_date)) + `<div class="wrap">${days}
     <div class="grid2"><div class="tile"><div class="k pos">${t('moneyIn')}</div><div class="v">${N(D.in_total, true)}</div><div class="s">${t('receipts', {n: D.in_count})}</div></div>
       <div class="tile"><div class="k neg">${t('moneyOut')}</div><div class="v">${N(-D.out_total)}</div><div class="s">${t('payments', {n: D.out_count})}</div></div></div>
     <div class="sec"><div class="sec-h">${t('moneyIn')}</div><div class="card">${D.in_groups.length ? D.in_groups.map(g => `<div class="row"><div class="l"><b>${esc(g.label)}</b><small>${t('receipts', {n: g.count})}</small></div><div class="r pos">${N(g.amount, true)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}</div></div>
