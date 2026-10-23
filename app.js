@@ -19,7 +19,7 @@ const T = {
     saved: 'Saved', cost: 'Cost', net: 'Net so far', quarters: '{n} quarters', cash: 'cash settled', everyQ: 'Every quarter', swaps: 'Swaps in place',
     swap: 'Swap {n}', mtm: 'Market value of the swaps (not cash)', gainYear: 'Change this year', aed: 'AED', signout: 'Sign out', update: 'Update screen',
     chpw: 'Change password', oldpw: 'Current password', newpw: 'New password (8+ characters)', save: 'Save', cancel: 'Cancel', pwdone: 'Password changed.',
-    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
+    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
     pairTitle: 'This phone is not set up', pairBody: 'Ask the finance team in the office for your QR code and scan it with the iPhone camera.', installHint: 'Set up. Now tap Share, then Add to Home Screen, and open the app from the new icon.',
     badKey: 'This phone needs a new QR code from the office.', thisPhone: 'This phone', offlineR: 'No connection. Showing the last position received.'
   },
@@ -41,7 +41,7 @@ const T = {
     saved: 'وفورات', cost: 'تكلفة', net: 'الصافي حتى الآن', quarters: '{n} أرباع', cash: 'نقداً', everyQ: 'كل ربع سنة', swaps: 'عقود المقايضة القائمة',
     swap: 'مقايضة {n}', mtm: 'القيمة السوقية للمقايضات (غير نقدية)', gainYear: 'التغير هذا العام', aed: 'درهم', signout: 'تسجيل الخروج', update: 'شاشة التحديث',
     chpw: 'تغيير كلمة المرور', oldpw: 'كلمة المرور الحالية', newpw: 'كلمة المرور الجديدة (8 أحرف أو أكثر)', save: 'حفظ', cancel: 'إلغاء', pwdone: 'تم تغيير كلمة المرور.',
-    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
+    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
     pairTitle: 'هذا الهاتف غير مُعد', pairBody: 'اطلب رمز QR الخاص بك من فريق المالية في المكتب وامسحه بكاميرا الآيفون.', installHint: 'تم الإعداد. اضغط على مشاركة ثم إضافة إلى الشاشة الرئيسية، وافتح التطبيق من الأيقونة الجديدة.',
     badKey: 'يحتاج هذا الهاتف إلى رمز QR جديد من المكتب.', thisPhone: 'هذا الهاتف', offlineR: 'لا يوجد اتصال. يتم عرض آخر موقف تم استلامه.'
   }
@@ -155,7 +155,7 @@ function loan() {
   const days = Math.round((new Date(L.next_due + 'T12:00:00') - new Date(D.position_date + 'T12:00:00')) / 864e5);
   const swapTot = D.swaps.reduce((s, x) => s + x.notional, 0), maxP = Math.max(...L.by_project.map(p => p[1]));
   return screenHead(t('loanTitle'), 'AA2535100147') + `<div class="wrap">
-    <div class="card pad"><div class="note">${t('outstanding')}</div><div style="font-size:28px;font-weight:700;margin:4px 0 12px">${t('aed')} ${N(L.outstanding)}</div>
+    <div class="card pad"><div class="note">${t('outstanding')}${L.outstanding_as_of ? ' · ' + t('asOf', {d: dstr(L.outstanding_as_of)}) : ''}</div><div style="font-size:28px;font-weight:700;margin:4px 0 12px">${t('aed')} ${N(L.outstanding)}</div>
       <div class="meter"><i style="width:${L.outstanding / L.limit * 100}%;background:var(--green)"></i><i style="width:${L.principal_paid / L.limit * 100}%;background:#9CC8AE"></i></div>
       <div class="grid3" style="margin-top:12px;font-size:11px"><div><div class="muted">${t('limit')}</div><b class="num">${fmtM(L.limit)}</b></div><div><div class="muted">${t('drawn')}</div><b class="num">${fmtM(L.drawn)}</b></div><div><div class="muted">${t('stillAvail')}</div><b class="num">${fmtM(L.limit - L.drawn)}</b></div></div></div>
     <div class="card pad" style="border-inline-start:4px solid var(--amber)"><div class="sec-h">${t('nextInst', {d: dstr(L.next_due)})}<span class="pill warn">${t('days', {n: days})}</span></div>
