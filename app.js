@@ -19,7 +19,7 @@ const T = {
     saved: 'Saved', cost: 'Cost', net: 'Net so far', quarters: '{n} quarters', cash: 'cash settled', everyQ: 'Every quarter', swaps: 'Swaps in place',
     swap: 'Swap {n}', mtm: 'Market value of the swaps (not cash)', gainYear: 'Change this year', aed: 'AED', signout: 'Sign out', update: 'Update screen',
     chpw: 'Change password', oldpw: 'Current password', newpw: 'New password (8+ characters)', save: 'Save', cancel: 'Cancel', pwdone: 'Password changed.',
-    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', fixedAt: 'fixed {r}%', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
+    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', fixedAt: 'fixed {r}%', cashPlusCard: 'Cash {c} + Credit card {k}', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
     pairTitle: 'This phone is not set up', pairBody: 'Ask the finance team in the office for your QR code and scan it with the iPhone camera.', installHint: 'Set up. Now tap Share, then Add to Home Screen, and open the app from the new icon.',
     badKey: 'This phone needs a new QR code from the office.', thisPhone: 'This phone', offlineR: 'No connection. Showing the last position received.'
   },
@@ -41,7 +41,7 @@ const T = {
     saved: 'وفورات', cost: 'تكلفة', net: 'الصافي حتى الآن', quarters: '{n} أرباع', cash: 'نقداً', everyQ: 'كل ربع سنة', swaps: 'عقود المقايضة القائمة',
     swap: 'مقايضة {n}', mtm: 'القيمة السوقية للمقايضات (غير نقدية)', gainYear: 'التغير هذا العام', aed: 'درهم', signout: 'تسجيل الخروج', update: 'شاشة التحديث',
     chpw: 'تغيير كلمة المرور', oldpw: 'كلمة المرور الحالية', newpw: 'كلمة المرور الجديدة (8 أحرف أو أكثر)', save: 'حفظ', cancel: 'إلغاء', pwdone: 'تم تغيير كلمة المرور.',
-    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', fixedAt: 'ثابت {r}%', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
+    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', fixedAt: 'ثابت {r}%', cashPlusCard: 'نقداً {c} + بطاقات ائتمان {k}', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
     pairTitle: 'هذا الهاتف غير مُعد', pairBody: 'اطلب رمز QR الخاص بك من فريق المالية في المكتب وامسحه بكاميرا الآيفون.', installHint: 'تم الإعداد. اضغط على مشاركة ثم إضافة إلى الشاشة الرئيسية، وافتح التطبيق من الأيقونة الجديدة.',
     badKey: 'يحتاج هذا الهاتف إلى رمز QR جديد من المكتب.', thisPhone: 'هذا الهاتف', offlineR: 'لا يوجد اتصال. يتم عرض آخر موقف تم استلامه.'
   }
@@ -67,7 +67,10 @@ const period = () => D.movement_from && D.movement_from < D.movement_date ? dstr
 // receipt names from the server rules, e.g. "Sarab Supermarket - Credit Card"; Arabic shown when AR is selected
 const BRANCH_AR = {Samha: 'سمحة', Sarab: 'سراب', Baniyas: 'بني ياس', Shahama: 'الشهامة'};
 const inLabel = s => {
-  const m = lang === 'ar' && /^(\w+) Supermarket - (Cash|Credit Card)$/.exec(s || '');
+  if (lang !== 'ar') return s;
+  const c = /^(\w+) Supermarket Collection$/.exec(s || '');
+  if (c) return `تحصيلات سوبرماركت ${BRANCH_AR[c[1]] || c[1]}`;
+  const m = /^(\w+) Supermarket - (Cash|Credit Card)$/.exec(s || '');
   return m ? `سوبرماركت ${BRANCH_AR[m[1]] || m[1]} - ${m[2] === 'Cash' ? 'نقداً' : 'بطاقات ائتمان'}` : s;
 };
 const bank = b => lang === 'ar' ? (BANK_AR[b] || b) : b;
@@ -138,7 +141,7 @@ function inout() {
   return screenHead(t('inTitle'), period() || dlong(D.movement_date)) + `<div class="wrap">${days}
     <div class="grid2"><div class="tile"><div class="k pos">${t('moneyIn')}</div><div class="v">${N(D.in_total, true)}</div><div class="s">${t('receipts', {n: D.in_count})}</div></div>
       <div class="tile"><div class="k neg">${t('moneyOut')}</div><div class="v">${N(-D.out_total)}</div><div class="s">${t('payments', {n: D.out_count})}</div></div></div>
-    <div class="sec"><div class="sec-h">${t('moneyIn')}</div><div class="card">${D.in_groups.length ? D.in_groups.map(g => `<div class="row"><div class="l"><b>${esc(inLabel(g.label))}</b></div><div class="r pos">${N(g.amount, true)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}</div></div>
+    <div class="sec"><div class="sec-h">${t('moneyIn')}</div><div class="card">${D.in_groups.length ? D.in_groups.map(g => `<div class="row"><div class="l"><b>${esc(inLabel(g.label))}</b>${g.supermarket ? `<small>${t('cashPlusCard', {c: fmt(g.cash), k: fmt(g.card)})}</small>` : ''}</div><div class="r pos">${N(g.amount, true)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}</div></div>
     <div class="sec"><div class="sec-h">${t('top10')}</div><div class="card">${D.out_top.length ? D.out_top.map(m => `<div class="row"><div class="l"><b>${esc(m.party)}</b><small class="num">${esc(m.ref || '')}</small></div><div class="r">${N(-m.amount)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}
       ${D.out_rest.count ? `<div class="row"><div class="l"><small>${t('more', {n: D.out_rest.count})}</small></div><div class="r">${N(-D.out_rest.amount)}</div></div>` : ''}</div></div></div>`;
 }
