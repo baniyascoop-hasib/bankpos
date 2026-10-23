@@ -13,7 +13,7 @@ const T = {
     depTitle: 'Deposits & guarantees', fixed: 'Fixed deposits', rate: '{r}% a year', rateTbc: 'rate to be confirmed', matures: 'Matures {d}',
     daysLeft: '{n} days left', atMaturity: 'At maturity', noMaturity: 'no fixed maturity', guarantees: 'Bank guarantees', gTotal: 'Total guarantees',
     loanTitle: 'FAB term loan', outstanding: 'Outstanding today', limit: 'Limit', drawn: 'Drawn to date', stillAvail: 'Still available',
-    nextInst: 'Next instalment · {d}', keep: 'Keep 1.4× (≈ AED {a}) in the rental account', days: '{n} days', paid: 'Paid to bank so far',
+    nextInst: 'Next instalment · {d}', ytdPaid: 'Paid to bank this year ({y})', ytdCount: '{n} instalments in {y}', days: '{n} days', paid: 'Paid to bank so far',
     instPaid: 'Instalments paid', ofInt: 'of which interest', ofPrin: 'of which principal', fromTo: 'From Jun 2022 to {d}', where: 'Where the loan went',
     hedgeLink: 'Hedging on this loan', hedgeSub: '{n} interest rate swaps · {a} covered', hedgeTitle: 'Interest rate hedging', hedgeSubT: 'What the swaps saved or cost each quarter',
     saved: 'Saved', cost: 'Cost', net: 'Net so far', quarters: '{n} quarters', cash: 'cash settled', everyQ: 'Every quarter', swaps: 'Swaps in place',
@@ -35,7 +35,7 @@ const T = {
     depTitle: 'الودائع والضمانات', fixed: 'الودائع الثابتة', rate: '{r}% سنوياً', rateTbc: 'سعر الفائدة قيد التأكيد', matures: 'تستحق {d}',
     daysLeft: 'متبقي {n} يوماً', atMaturity: 'عند الاستحقاق', noMaturity: 'بدون تاريخ استحقاق', guarantees: 'الضمانات البنكية', gTotal: 'إجمالي الضمانات',
     loanTitle: 'قرض بنك أبوظبي الأول', outstanding: 'الرصيد القائم اليوم', limit: 'الحد', drawn: 'المسحوب حتى الآن', stillAvail: 'المتبقي',
-    nextInst: 'القسط القادم · {d}', keep: 'الاحتفاظ بـ 1.4× (≈ {a} درهم) في حساب الإيجارات', days: '{n} يوماً', paid: 'المدفوع للبنك حتى الآن',
+    nextInst: 'القسط القادم · {d}', ytdPaid: 'المدفوع للبنك هذا العام ({y})', ytdCount: '{n} أقساط في {y}', days: '{n} يوماً', paid: 'المدفوع للبنك حتى الآن',
     instPaid: 'الأقساط المدفوعة', ofInt: 'منها فوائد', ofPrin: 'منها أصل القرض', fromTo: 'من يونيو 2022 إلى {d}', where: 'أين استُخدم القرض',
     hedgeLink: 'التحوط على هذا القرض', hedgeSub: '{n} عقود مقايضة · تغطي {a}', hedgeTitle: 'التحوط من أسعار الفائدة', hedgeSubT: 'ما وفرته أو كلفته المقايضات كل ربع سنة',
     saved: 'وفورات', cost: 'تكلفة', net: 'الصافي حتى الآن', quarters: '{n} أرباع', cash: 'نقداً', everyQ: 'كل ربع سنة', swaps: 'عقود المقايضة القائمة',
@@ -47,7 +47,7 @@ const T = {
   }
 };
 const BANK_AR = {FAB: 'بنك أبوظبي الأول', ADCB: 'بنك أبوظبي التجاري', 'ADCB Islamic': 'أبوظبي التجاري الإسلامي'};
-const PROJ_AR = {'Souq Sarab': 'سوق سراب', 'Baniyas Center': 'مركز بني ياس', 'Souq Samha': 'سوق سمحة', 'Yas Island': 'جزيرة ياس'};
+const PROJ_AR = {'Souq Sarab': 'سوق سراب', 'Baniyas Center': 'مركز بني ياس', 'Souq Samha': 'سوق سمحة', 'Yas Island': 'جزيرة ياس', 'Al Bateen': 'البطين'};
 let lang = 'en', user = null, D = null, tab = 'home', menuOpen = false, notice = null;
 const REMOTE = !!window.BK_REMOTE;
 try { lang = localStorage.getItem('bk_lang') || 'en'; } catch (e) {}
@@ -154,20 +154,26 @@ function loan() {
   const L = D.loan; if (!L || !L.limit) return screenHead(t('loanTitle')) + `<div class="empty">${t('none')}</div>`;
   const days = Math.round((new Date(L.next_due + 'T12:00:00') - new Date(D.position_date + 'T12:00:00')) / 864e5);
   const swapTot = D.swaps.reduce((s, x) => s + x.notional, 0), maxP = Math.max(...L.by_project.map(p => p[1]));
+  // this year's repayments, from the loan history ('period' is like "Sep 2026")
+  const yr = D.position_date.slice(0, 4), ytd = (L.events || []).filter(e => e.purpose === 'Repayment' && String(e.period).trim().endsWith(yr));
+  const sum = (list, k) => list.reduce((s, e) => s + (e[k] || 0), 0);
   return screenHead(t('loanTitle'), 'AA2535100147') + `<div class="wrap">
     <div class="card pad"><div class="note">${t('outstanding')}${L.outstanding_as_of ? ' · ' + t('asOf', {d: dstr(L.outstanding_as_of)}) : ''}</div><div style="font-size:28px;font-weight:700;margin:4px 0 12px">${t('aed')} ${N(L.outstanding)}</div>
       <div class="meter"><i style="width:${L.outstanding / L.limit * 100}%;background:var(--green)"></i><i style="width:${L.principal_paid / L.limit * 100}%;background:#9CC8AE"></i></div>
       <div class="grid3" style="margin-top:12px;font-size:11px"><div><div class="muted">${t('limit')}</div><b class="num">${fmtM(L.limit)}</b></div><div><div class="muted">${t('drawn')}</div><b class="num">${fmtM(L.drawn)}</b></div><div><div class="muted">${t('stillAvail')}</div><b class="num">${fmtM(L.limit - L.drawn)}</b></div></div></div>
     <div class="card pad" style="border-inline-start:4px solid var(--amber)"><div class="sec-h">${t('nextInst', {d: dstr(L.next_due)})}<span class="pill warn">${t('days', {n: days})}</span></div>
-      <div style="font-size:22px;font-weight:700;margin:6px 0">${N(L.next_amount)}</div><div class="note">${t('keep', {a: (L.next_amount * 1.4 / 1e6).toFixed(1) + 'M'})}</div></div>
+      <div style="font-size:22px;font-weight:700;margin:6px 0">${N(L.next_amount)}</div></div>
+    <div class="sec"><div class="sec-h">${t('ytdPaid', {y: yr})}</div><div class="card">
+      <div class="row"><div class="l"><b>${t('instPaid')}</b><small>${t('ytdCount', {n: ytd.length, y: yr})}</small></div><div class="r">${N(sum(ytd, 'instalment'))}</div></div>
+      <div class="row"><div class="l"><small>${t('ofInt')}</small></div><div class="r">${N(sum(ytd, 'interest'))}</div></div>
+      <div class="row"><div class="l"><small>${t('ofPrin')}</small></div><div class="r">${N(sum(ytd, 'principal'))}</div></div></div></div>
     <div class="sec"><div class="sec-h">${t('paid')}</div><div class="card">
-      <div class="row"><div class="l"><b>${t('instPaid')}</b><small>${t('fromTo', {d: dstr(L.schedule_as_of)})}</small></div><div class="r">${N(L.instalments_paid)}</div></div>
+      <div class="row"><div class="l"><b>${t('instPaid')}</b><small>${t('fromTo', {d: dstr(L.outstanding_as_of || L.schedule_as_of)})}</small></div><div class="r">${N(L.instalments_paid)}</div></div>
       <div class="row"><div class="l"><small>${t('ofInt')}</small></div><div class="r">${N(L.interest_paid)}</div></div>
       <div class="row"><div class="l"><small>${t('ofPrin')}</small></div><div class="r">${N(L.principal_paid)}</div></div></div></div>
     <div class="sec"><div class="sec-h">${t('where')}</div><div class="card pad bars">
       ${L.by_project.map(p => `<div><div style="display:flex;justify-content:space-between;font-size:13px"><span>${lang === 'ar' ? (PROJ_AR[p[0]] || p[0]) : esc(p[0])}</span><b class="num">${fmtM(p[1])}</b></div><div class="meter" style="margin-top:4px"><i style="width:${p[1] / maxP * 100}%;background:var(--green)"></i></div></div>`).join('')}</div></div>
-    <a class="dark" href="#hedging"><div><small>${t('hedgeLink')}</small><div style="font-size:14px;font-weight:600">${t('hedgeSub', {n: D.swaps.length, a: fmtM(swapTot)})}</div></div><span style="font-size:20px">${lang === 'ar' ? '‹' : '›'}</span></a>
-    <div class="note">${t('schedAsOf', {d: dstr(L.schedule_as_of)})}</div></div>`;
+    <a class="dark" href="#hedging"><div><small>${t('hedgeLink')}</small><div style="font-size:14px;font-weight:600">${t('hedgeSub', {n: D.swaps.length, a: fmtM(swapTot)})}</div></div><span style="font-size:20px">${lang === 'ar' ? '‹' : '›'}</span></a></div>`;
 }
 
 function hedging() {
