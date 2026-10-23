@@ -64,6 +64,12 @@ const dlong = iso => dstr(iso, {weekday: 'long', day: 'numeric', month: 'long', 
 const tstr = iso => iso ? new Date(iso).toLocaleTimeString(lang === 'ar' ? 'ar-AE-u-nu-latn' : 'en-GB', {hour: '2-digit', minute: '2-digit'}) : '';
 // several days when the last publish was before yesterday (e.g. Monday: Fri - Sun)
 const period = () => D.movement_from && D.movement_from < D.movement_date ? dstr(D.movement_from, {weekday: 'short', day: 'numeric', month: 'short'}) + ' – ' + dstr(D.movement_date, {weekday: 'short', day: 'numeric', month: 'short'}) : null;
+// receipt names from the server rules, e.g. "Sarab Supermarket - Credit Card"; Arabic shown when AR is selected
+const BRANCH_AR = {Samha: 'سمحة', Sarab: 'سراب', Baniyas: 'بني ياس', Shahama: 'الشهامة'};
+const inLabel = s => {
+  const m = lang === 'ar' && /^(\w+) Supermarket - (Cash|Credit Card)$/.exec(s || '');
+  return m ? `سوبرماركت ${BRANCH_AR[m[1]] || m[1]} - ${m[2] === 'Cash' ? 'نقداً' : 'بطاقات ائتمان'}` : s;
+};
 const bank = b => lang === 'ar' ? (BANK_AR[b] || b) : b;
 
 async function api(path, opt) {
@@ -132,7 +138,7 @@ function inout() {
   return screenHead(t('inTitle'), period() || dlong(D.movement_date)) + `<div class="wrap">${days}
     <div class="grid2"><div class="tile"><div class="k pos">${t('moneyIn')}</div><div class="v">${N(D.in_total, true)}</div><div class="s">${t('receipts', {n: D.in_count})}</div></div>
       <div class="tile"><div class="k neg">${t('moneyOut')}</div><div class="v">${N(-D.out_total)}</div><div class="s">${t('payments', {n: D.out_count})}</div></div></div>
-    <div class="sec"><div class="sec-h">${t('moneyIn')}</div><div class="card">${D.in_groups.length ? D.in_groups.map(g => `<div class="row"><div class="l"><b>${esc(g.label)}</b><small>${t('receipts', {n: g.count})}</small></div><div class="r pos">${N(g.amount, true)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}</div></div>
+    <div class="sec"><div class="sec-h">${t('moneyIn')}</div><div class="card">${D.in_groups.length ? D.in_groups.map(g => `<div class="row"><div class="l"><b>${esc(inLabel(g.label))}</b></div><div class="r pos">${N(g.amount, true)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}</div></div>
     <div class="sec"><div class="sec-h">${t('top10')}</div><div class="card">${D.out_top.length ? D.out_top.map(m => `<div class="row"><div class="l"><b>${esc(m.party)}</b><small class="num">${esc(m.ref || '')}</small></div><div class="r">${N(-m.amount)}</div></div>`).join('') : `<div class="row muted">${t('none')}</div>`}
       ${D.out_rest.count ? `<div class="row"><div class="l"><small>${t('more', {n: D.out_rest.count})}</small></div><div class="r">${N(-D.out_rest.amount)}</div></div>` : ''}</div></div></div>`;
 }
