@@ -19,7 +19,7 @@ const T = {
     saved: 'Saved', cost: 'Cost', net: 'Net so far', quarters: '{n} quarters', cash: 'cash settled', everyQ: 'Every quarter', swaps: 'Swaps in place',
     swap: 'Swap {n}', mtm: 'Market value of the swaps (not cash)', gainYear: 'Change this year', aed: 'AED', signout: 'Sign out', update: 'Update screen',
     chpw: 'Change password', oldpw: 'Current password', newpw: 'New password (8+ characters)', save: 'Save', cancel: 'Cancel', pwdone: 'Password changed.',
-    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', fixedAt: 'fixed {r}%', cashPlusCard: 'Cash {c} + Credit card {k}', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
+    empty: 'No position has been published yet.', offline: 'Cannot reach the server. Showing the last position loaded.', schedAsOf: 'Loan schedule as of {d}', sinceLast: 'Since last update', asOf: 'as of {d}', fixedAt: 'fixed {r}%', cashPlusCard: 'Cash {c} + Credit card {k}', notifyOn: 'Turn on notifications', notifyIsOn: 'Notifications are on', notifyHint: 'Get a notification as soon as the new balances are published.', notifyFail: 'Notifications could not be turned on: {e}', notifyInstall: 'Open the app from its home-screen icon to turn on notifications.', notifyDenied: 'Notifications are blocked. Allow them in iPhone Settings → Notifications → Bank Position.', byDay: 'Day by day', refresh: 'Refresh', unpair: 'Remove from this phone', unpairQ: 'Remove the bank position from this phone? It will need a new QR code from the office.',
     pairTitle: 'This phone is not set up', pairBody: 'Ask the finance team in the office for your QR code and scan it with the iPhone camera.', installHint: 'Set up. Now tap Share, then Add to Home Screen, and open the app from the new icon.',
     badKey: 'This phone needs a new QR code from the office.', thisPhone: 'This phone', offlineR: 'No connection. Showing the last position received.'
   },
@@ -41,7 +41,7 @@ const T = {
     saved: 'وفورات', cost: 'تكلفة', net: 'الصافي حتى الآن', quarters: '{n} أرباع', cash: 'نقداً', everyQ: 'كل ربع سنة', swaps: 'عقود المقايضة القائمة',
     swap: 'مقايضة {n}', mtm: 'القيمة السوقية للمقايضات (غير نقدية)', gainYear: 'التغير هذا العام', aed: 'درهم', signout: 'تسجيل الخروج', update: 'شاشة التحديث',
     chpw: 'تغيير كلمة المرور', oldpw: 'كلمة المرور الحالية', newpw: 'كلمة المرور الجديدة (8 أحرف أو أكثر)', save: 'حفظ', cancel: 'إلغاء', pwdone: 'تم تغيير كلمة المرور.',
-    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', fixedAt: 'ثابت {r}%', cashPlusCard: 'نقداً {c} + بطاقات ائتمان {k}', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
+    empty: 'لم يتم نشر أي موقف بعد.', offline: 'تعذر الاتصال بالخادم. يتم عرض آخر موقف محمّل.', schedAsOf: 'جدول القرض حتى {d}', sinceLast: 'منذ آخر تحديث', asOf: 'حتى {d}', fixedAt: 'ثابت {r}%', cashPlusCard: 'نقداً {c} + بطاقات ائتمان {k}', notifyOn: 'تفعيل الإشعارات', notifyIsOn: 'الإشعارات مفعّلة', notifyHint: 'احصل على إشعار فور نشر الأرصدة الجديدة.', notifyFail: 'تعذر تفعيل الإشعارات: {e}', notifyInstall: 'افتح التطبيق من أيقونته على الشاشة الرئيسية لتفعيل الإشعارات.', notifyDenied: 'الإشعارات محظورة. اسمح بها من إعدادات الآيفون ← الإشعارات ← Bank Position.', byDay: 'حسب اليوم', refresh: 'تحديث', unpair: 'إزالة من هذا الهاتف', unpairQ: 'إزالة الموقف المصرفي من هذا الهاتف؟ ستحتاج إلى رمز QR جديد من المكتب.',
     pairTitle: 'هذا الهاتف غير مُعد', pairBody: 'اطلب رمز QR الخاص بك من فريق المالية في المكتب وامسحه بكاميرا الآيفون.', installHint: 'تم الإعداد. اضغط على مشاركة ثم إضافة إلى الشاشة الرئيسية، وافتح التطبيق من الأيقونة الجديدة.',
     badKey: 'يحتاج هذا الهاتف إلى رمز QR جديد من المكتب.', thisPhone: 'هذا الهاتف', offlineR: 'لا يوجد اتصال. يتم عرض آخر موقف تم استلامه.'
   }
@@ -98,7 +98,7 @@ function topBar() {
   return `<div class="bar"><div class="brand"><div class="mark"><img src="icon-64.png" alt=""></div><div><b>${t('org')}</b><small>${t('app')}</small></div></div>
     <div class="tools"><div class="lang" role="group" aria-label="Language"><button class="${lang === 'en' ? 'on' : ''}" onclick="setLang('en')">EN</button><button class="${lang === 'ar' ? 'on' : ''}" onclick="setLang('ar')">ع</button></div>
     <button class="iconbtn" aria-label="Menu" onclick="toggleMenu()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button></div></div>
-    ${menuOpen && REMOTE ? `<div class="menu"><div class="who">${t('thisPhone')}</div><button onclick="menuOpen=false;D=null;load()">${t('refresh')}</button><button onclick="unpair()">${t('unpair')}</button></div>` : ''}
+    ${menuOpen && REMOTE ? `<div class="menu"><div class="who">${t('thisPhone')}</div><button onclick="menuOpen=false;D=null;load()">${t('refresh')}</button>${D && D.push ? (pushIsOn() ? `<button disabled>✓ ${t('notifyIsOn')}</button>` : `<button onclick="enableNotify()">${t('notifyOn')}</button>`) : ''}<button onclick="unpair()">${t('unpair')}</button></div>` : ''}
     ${menuOpen && !REMOTE ? `<div class="menu"><div class="who">${esc(user.name)}</div>${user.role !== 'viewer' ? `<a href="/update">${t('update')}</a>` : ''}<button onclick="changePw()">${t('chpw')}</button><button onclick="signOut()">${t('signout')}</button></div>` : ''}`;
 }
 function screenHead(title, sub) { return `<div class="top">${topBar()}<div><div class="title">${title}</div>${sub ? `<div class="subtitle">${sub}</div>` : ''}</div></div>`; }
@@ -116,6 +116,7 @@ function home() {
     <div class="float"><div><div class="k">${t('free')}</div><div class="v">${N(D.free)}</div></div><div><div class="k">${t('available')}</div><div class="v">${N(D.available)}</div></div>
       <div><div class="k">${t('blocked')}</div><div class="v neg">${N(D.blocked)}</div></div></div>
     <div class="wrap">
+      ${REMOTE && D.push && !pushIsOn() ? `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="note">${t('notifyHint')}</span><button class="btn" style="height:38px;font-size:13px;white-space:nowrap" onclick="enableNotify()">${t('notifyOn')}</button></div>` : ''}
       <div class="sec"><div class="sec-h">${period() ? t('sinceLast') + ' · ' + period() : t('yesterday') + ' · ' + dstr(D.movement_date, {weekday: 'long', day: 'numeric', month: 'long'})}<a href="#inout">${t('details')}</a></div>
         <div class="grid2"><a class="tile" href="#inout"><div class="k pos">${t('in')}</div><div class="v">${N(D.in_total, true)}</div><div class="s">${t('receipts', {n: D.in_count})}</div></a>
           <a class="tile" href="#inout"><div class="k neg">${t('out')}</div><div class="v">${N(-D.out_total)}</div><div class="s">${t('payments', {n: D.out_count})}</div></a></div></div>
@@ -243,6 +244,13 @@ function pairScreen(msg) {
   $('#root').innerHTML = `<div class="login"><img src="logo-wordmark.png" alt="${t('org')}"><h1>${t(msg || 'pairTitle')}</h1><p class="note" style="text-align:center">${t('pairBody')}</p>
     <div class="lang" style="align-self:center;background:var(--line)"><button type="button" class="${lang === 'en' ? 'on' : ''}" style="color:var(--green)" onclick="setLang('en')">EN</button><button type="button" class="${lang === 'ar' ? 'on' : ''}" style="color:var(--green)" onclick="setLang('ar')">ع</button></div></div>`;
 }
+async function enableNotify() {
+  menuOpen = false;
+  try { await enablePush(D.push); notice = 'notifyIsOn'; }
+  catch (x) { alert(x.code === 'install' ? t('notifyInstall') : x.code === 'denied' ? t('notifyDenied') : t('notifyFail', {e: x.message})); }
+  render();
+}
+if (REMOTE && 'serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data === 'reload') { D = null; load(); } });
 function unpair() { if (!confirm(t('unpairQ'))) return; unpairPhone(); user = null; D = null; menuOpen = false; render(); }
 async function load() {
   if (REMOTE) {

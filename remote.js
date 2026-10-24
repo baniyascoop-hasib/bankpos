@@ -49,3 +49,27 @@ async function remoteLoad() {
   }
   const d = await decryptEnvelope(p.k, env); d._offline = offline; return d;
 }
+
+// ---- "position updated" notifications (Web Push; iPhone: only from the home-screen icon, iOS 16.4+)
+const PUSH_KEY = 'bk_push';
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+function pushIsOn() {
+  try { return !!localStorage.getItem(PUSH_KEY) && Notification.permission === 'granted'; } catch (e) { return false; }
+}
+// cfg = D.push from the decrypted position: {url, key (publishable), bucket, vapid}. The subscription is stored in a
+// private Supabase bucket that the publishable key can only add to; the Mac mini reads it when Ahmad publishes.
+async function enablePush(cfg) {
+  if (!pushSupported()) { const e = new Error('install'); e.code = 'install'; throw e; }
+  if (await Notification.requestPermission() !== 'granted') { const e = new Error('denied'); e.code = 'denied'; throw e; }
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64d(cfg.vapid)});
+  const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)) + '.json';
+  const p = getPair() || {};
+  const h = {'apikey': cfg.key, 'Content-Type': 'application/json'};
+  if (!cfg.key.startsWith('sb_')) h.Authorization = 'Bearer ' + cfg.key;   // legacy anon JWT
+  const r = await fetch(`${cfg.url}/storage/v1/object/${cfg.bucket}/${id}`, {method: 'POST', headers: h,
+    body: JSON.stringify({endpoint: sub.endpoint, phone: p.n || '', at: new Date().toISOString()})});
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (await r.text()).slice(0, 120));
+  localStorage.setItem(PUSH_KEY, JSON.stringify({id, endpoint: sub.endpoint}));
+}
