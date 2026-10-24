@@ -205,11 +205,12 @@ function planScreen(key) {
   const P = D.plans[key]; if (!P) return propertyScreen(key);
   const fl = P.floors.find(f => f.id === (view.floor || 'G')) || P.floors[0];
   const [X0, Y0, W, H] = P.frame, pc = (v, tot) => (v / tot * 100).toFixed(3) + '%';
-  const reg = {}; D.units.filter(u => u.property === key).forEach(u => { reg[u.code] = u; });
+  const reg = {}; D.units.filter(u => u.property === key).forEach(u => { if (!reg[u.code] || (!reg[u.code].tenant && u.tenant)) reg[u.code] = u; });
   const disp = pu => { const r = pu.reg ? reg[pu.reg] : null;
     if (pu.plan === 'service') return 'none';
     if (r && r.status === 'Cancelled') return 'none';
-    if (r) { const s = sOf(r); return (s === 'leased' || s === 'soon') && (pu.plan === 'fitout' || pu.plan === 'confirmed') ? pu.plan : s; }
+    // signed tenant still fitting out: the plan knows before the register does
+    if (r) { const s = sOf(r); return (s === 'leased' || s === 'soon' || s === 'vacant') && (pu.plan === 'fitout' || pu.plan === 'confirmed') ? pu.plan : s; }
     return pu.plan === 'op' ? 'leased' : pu.plan; };
   const f = view.filter || 'all';
   const all = fl.units.map(disp), cnt = k => all.filter(x => x === k).length;
@@ -220,7 +221,7 @@ function planScreen(key) {
       <div class="sec-h" style="font-size:13px;font-weight:500"><span class="muted" style="font-weight:500">${t('annualRent')} <b class="num" style="color:var(--ink);font-size:14px">${selReg && selReg.amount ? fmt(selReg.amount) : '—'}</b>${selReg && selReg.end ? ' · ' + t('ends', {d: dstr(selReg.end)}) : ''}</span></div>
       ${selReg ? `<a class="btn" href="#unit/${selReg.id}">${t('tenantDetails')}</a>` : `<div class="note">${t('fromRegister')}</div>`}</div>`; })() : `<div class="sheet note">${t('tapAny')}</div>`;
   return `<div class="top"><a class="back" href="#property/${key}">${chev()}${esc(pname(key))}</a><div><div class="title">${t('plan')}</div><div class="subtitle">${t('planHint')}</div></div>
-      <div class="seg two" role="group" aria-label="Floor">${P.floors.map(x => `<button class="${x.id === fl.id ? 'on' : ''}" onclick="view.floor='${x.id}';view.sel=null;render()">${esc(lang === 'ar' ? x.name_ar : x.name)}</button>`).join('')}</div></div>
+      <div class="seg two" role="group" aria-label="Floor" style="${P.floors.length < 2 ? 'display:none' : ''}">${P.floors.map(x => `<button class="${x.id === fl.id ? 'on' : ''}" onclick="view.floor='${x.id}';view.sel=null;render()">${esc(lang === 'ar' ? x.name_ar : x.name)}</button>`).join('')}</div></div>
     <div class="wrap"><div class="chips">${chips.map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="view.filter='${k}';render()">${esc(l)}</button>`).join('')}</div>
       <div class="plan-layout"><div class="map-col"><div class="card pad"><div class="map" dir="ltr" style="aspect-ratio:${W} / ${H}">
         ${fl.blocks.map(([x, y, w, h]) => `<div class="blk" style="left:${pc(x - X0, W)};top:${pc(y - Y0, H)};width:${pc(w, W)};height:${pc(h, H)}"></div>`).join('')}
