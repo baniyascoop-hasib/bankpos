@@ -212,6 +212,8 @@ function planScreen(key) {
     // signed tenant still fitting out: the plan knows before the register does
     if (r) { const s = sOf(r); return (s === 'leased' || s === 'soon' || s === 'vacant') && (pu.plan === 'fitout' || pu.plan === 'confirmed') ? pu.plan : s; }
     return pu.plan === 'op' ? 'leased' : pu.plan; };
+  // shaped rooms: the outline as a clip-path, in % of the unit's own box
+  const clip = pu => pu.poly ? 'clip-path:polygon(' + pu.poly.map(([x, y]) => ((x - pu.x) / pu.w * 100).toFixed(1) + '% ' + ((y - pu.y) / pu.h * 100).toFixed(1) + '%').join(',') + ');border:0;border-radius:0;' : '';
   const f = view.filter || 'all';
   const all = fl.units.map(disp), cnt = k => all.filter(x => x === k).length;
   const sel = fl.units.find(pu => pu.code === view.sel);
@@ -221,13 +223,13 @@ function planScreen(key) {
       <div class="sec-h" style="font-size:13px;font-weight:500"><span class="muted" style="font-weight:500">${t('annualRent')} <b class="num" style="color:var(--ink);font-size:14px">${selReg && selReg.amount ? fmt(selReg.amount) : '—'}</b>${selReg && selReg.end ? ' · ' + t('ends', {d: dstr(selReg.end)}) : ''}</span></div>
       ${selReg ? `<a class="btn" href="#unit/${selReg.id}">${t('tenantDetails')}</a>` : `<div class="note">${t('fromRegister')}</div>`}</div>`; })() : `<div class="sheet note">${t('tapAny')}</div>`;
   return `<div class="top"><a class="back" href="#property/${key}">${chev()}${esc(pname(key))}</a><div><div class="title">${t('plan')}</div><div class="subtitle">${t('planHint')}</div></div>
-      <div class="seg two" role="group" aria-label="Floor" style="${P.floors.length < 2 ? 'display:none' : ''}">${P.floors.map(x => `<button class="${x.id === fl.id ? 'on' : ''}" onclick="view.floor='${x.id}';view.sel=null;render()">${esc(lang === 'ar' ? x.name_ar : x.name)}</button>`).join('')}</div></div>
+      <div class="seg two" role="group" aria-label="Floor" style="grid-template-columns:repeat(${P.floors.length},minmax(0,1fr));${P.floors.length < 2 ? 'display:none' : ''}">${P.floors.map(x => `<button class="${x.id === fl.id ? 'on' : ''}" onclick="view.floor='${x.id}';view.sel=null;render()">${esc(lang === 'ar' ? (x.short_ar || x.name_ar) : (x.short || x.name))}</button>`).join('')}</div></div>
     <div class="wrap"><div class="chips">${chips.map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" onclick="view.filter='${k}';render()">${esc(l)}</button>`).join('')}</div>
-      <div class="plan-layout"><div class="map-col"><div class="card pad"><div class="map" dir="ltr" style="aspect-ratio:${W} / ${H}">
+      <div class="plan-layout"><div class="map-col"><div class="card pad"><div class="map" dir="ltr" style="aspect-ratio:${W} / ${H}">${fl.bg ? `<img class="bg" src="${esc(fl.bg)}" alt="">` : ''}
         ${fl.blocks.map(([x, y, w, h]) => `<div class="blk" style="left:${pc(x - X0, W)};top:${pc(y - Y0, H)};width:${pc(w, W)};height:${pc(h, H)}"></div>`).join('')}
         ${fl.units.map((pu, i) => { const s = disp(pu), on = f === 'all' || s === f;
           return `<button class="u ${view.sel === pu.code ? 'sel' : ''}" onclick="view.sel='${esc(pu.code)}';render()" aria-label="${esc(pu.code + ' ' + pu.label + ' – ' + t(s))}"
-            style="left:${pc(pu.x - X0, W)};top:${pc(pu.y - Y0, H)};width:${pc(pu.w, W)};height:${pc(pu.h, H)};background:${STATUS_COLOUR[s]};color:${STATUS_INK[s]};opacity:${on ? 1 : .18};${s === 'vacant' ? 'border:1.5px dashed #8A5A00;' : ''}"><span>${pu.w >= 60 && pu.h >= 30 ? esc(pu.label) : ''}</span></button>`; }).join('')}
+            style="left:${pc(pu.x - X0, W)};top:${pc(pu.y - Y0, H)};width:${pc(pu.w, W)};height:${pc(pu.h, H)};background:${STATUS_COLOUR[s]};color:${STATUS_INK[s]};opacity:${on ? 1 : .18};${s === 'vacant' ? 'border:1.5px dashed #8A5A00;' : ''}${clip(pu)}"><span>${pu.w >= 60 && pu.h >= 30 ? esc(pu.label) : ''}</span></button>`; }).join('')}
         ${fl.doors.map(([x, y, en, ar]) => `<div class="door" style="left:${pc(x - X0, W)};top:${pc(y - Y0, H)}"><svg width="9" height="9" viewBox="0 0 24 24" fill="#13261B" aria-hidden="true"><path d="M12 3l9 16H3z"/></svg>${esc(lang === 'ar' ? ar : en)}</div>`).join('')}
       </div><div style="margin-top:8px">${legendHtml(['leased', 'soon', 'expired', 'fitout', 'confirmed', 'vacant'])}</div></div></div>
       <div class="side">${sheet}</div></div></div>`;
