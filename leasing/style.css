@@ -120,3 +120,16 @@ nav.tabs svg{width:22px;height:22px}
 table.list{width:100%;border-collapse:collapse;font-size:13px}
 table.list td,table.list th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:start}
 table.list th{font-size:11px;color:var(--muted)}
+
+/* finance pages (fin.js) */
+.mbars{display:flex;align-items:flex-end;gap:6px;height:130px}
+.mbars div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.mbars i{display:block;width:100%;border-radius:4px 4px 0 0;min-height:3px}
+.mbars span{font-size:9px;color:var(--muted);white-space:nowrap}.mbars small{font-size:10px;color:var(--muted)}
+.dgrid{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+.dgrid th{font-size:9px;color:var(--muted);font-weight:600;padding:2px;width:12%}.dgrid th:first-child{width:28%}
+.dgrid td{padding:6px 2px;border-top:1px solid var(--line);text-align:center}.dgrid td:first-child{text-align:start;overflow:hidden}
+.dgrid td b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dgrid td small{font-size:9px;color:var(--muted)}
+i.dk{font-style:normal;font-weight:800;font-size:14px}i.dk.ok{color:#0B6B37}i.dk.no{color:#C0182F}i.dk.old{color:#B07A00}i.dk.na{color:#9AA59E}
+.dchips{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px}
+.alert .r .num+svg,.alert .r svg{vertical-align:middle}

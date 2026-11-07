@@ -81,6 +81,7 @@ try { lang = localStorage.getItem('lz_lang') || 'en'; co = localStorage.getItem(
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const t = (k, v) => (T[lang][k] || T.en[k] || k).replace(/\{(\w+)\}/g, (_, x) => v && v[x] != null ? v[x] : '');
+const uno = u => /^UNT\d/i.test(u.uid || '') ? u.uid : u.code;   // the ADM unit number; internal only if a unit has none
 const fmt = n => Math.round(n || 0).toLocaleString('en-US');
 const fmtM = n => Math.abs(n) >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : fmt(n);
 const N = n => `<span class="num">${fmt(n)}</span>`;
@@ -102,7 +103,7 @@ function daysTo(iso) { return iso ? Math.round((new Date(iso + 'T12:00:00') - ne
 function sOf(u) {                       // register status -> display status
   if (!u) return 'none';
   if (u.status === 'Rented') { const d = daysTo(u.end); return d == null ? 'leased' : d < 0 ? 'ended' : d <= 90 ? 'soon' : 'leased'; }
-  return {Expired: 'expired', Vacant: 'vacant', 'Not Ready': 'notready'}[u.status] || 'none';
+  return {Expired: 'expired', Vacant: 'vacant', 'Not Ready': 'notready', Signed: 'confirmed'}[u.status] || 'none';
 }
 function units(filterCo) {
   const c = filterCo == null ? co : filterCo;
@@ -146,7 +147,7 @@ function head(title, sub, backHref, extra) {
   return `<div class="top">${backHref ? `<a class="back" href="${backHref}">${chev()}${t('back')}</a>` : topBar()}<div><div class="title">${title}</div>${sub ? `<div class="subtitle">${sub}</div>` : ''}</div>${extra || ''}</div>`;
 }
 function nav(active) {
-  return `<nav class="tabs"><div>${['home', 'properties', 'collections', 'leases', 'reports'].map(k => `<a href="#${k}" class="${active === k ? 'on' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${ICON[k]}</svg>${t(k)}</a>`).join('')}</div></nav>`;
+  return `<nav class="tabs"><div>${['home', 'properties', 'collections', 'leases', 'more'].map(k => `<a href="#${k}" class="${active === k ? 'on' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${ICON[k]}</svg>${t(k)}</a>`).join('')}</div></nav>`;
 }
 const legendHtml = keys => `<div class="legend">${keys.map(k => `<span><i style="background:${STATUS_COLOUR[k]};${k === 'vacant' ? 'border:1.5px dashed #8A5A00;box-sizing:border-box' : ''}"></i>${t(k)}</span>`).join('')}</div>`;
 
@@ -166,7 +167,8 @@ function home() {
         <a class="alert red" href="#leases"><div><b>${t('expiredNR', {n: s.expired})}</b><small>${t('atRisk')}</small></div><div class="r num">${fmt(s.atRisk)}</div></a>
         <a class="alert amber" href="#leases"><div><b>${t('endIn90', {n: s.soon})}</b><small>${t('within30', {n: s.soon30, a: fmt(s.soon30Rent)})}</small></div><div class="r num">${fmt(s.soonRent)}</div></a>
         <a class="alert white" href="#vacancy"><div><b>${t('vacantUnits', {n: s.vacant})}</b><small>${t('budgetYear', {a: fmt(s.vacantBudget)})}</small></div><div class="r">${fwd()}</div></a>
-        <a class="alert white" href="#collections"><div><b>${t('overdue')}</b><small>${t('notConnected')}</small></div><div class="r">—</div></a></div>
+        ${homeFinAlerts() || `<a class="alert white" href="#collections"><div><b>${t('overdue')}</b><small>${t('notConnected')}</small></div><div class="r">—</div></a>`}</div>
+      ${homeMonthCard()}
       ${co === 'ALL' ? `<div class="sec"><div class="sec-h">${t('byCompany')}<a href="#properties">${t('allProps')}</a></div><div class="card">${coRow('BAN')}${coRow('ALR')}</div></div>` : ''}
       <div class="note">${t('dataFrom', {f: esc(D.file), t: dstr(D.imported_at.slice(0, 10))})}</div>
     </div>`;
@@ -195,7 +197,7 @@ function propertyScreen(key) {
     <div class="wrap">
       ${p.plan ? `<a class="btn" href="#plan/${key}">${t('openPlan')}</a>` : ''}
       <div class="sec"><div class="sec-h">${t('unitMap')}<span class="muted">${t('tapUnit')}</span></div><div class="card pad" style="display:flex;flex-direction:column;gap:10px">
-        <div class="tiles">${us.map(u => `<a href="#unit/${u.id}" aria-label="${esc(u.code + ' ' + t(sOf(u)))}" title="${esc(u.code)}" style="background:${STATUS_COLOUR[sOf(u)]};${sOf(u) === 'vacant' ? 'border:1.5px dashed #8A5A00' : ''}"></a>`).join('')}</div>
+        <div class="tiles">${us.map(u => `<a href="#unit/${u.id}" aria-label="${esc(uno(u) + ' ' + t(sOf(u)))}" title="${esc(uno(u))}" style="background:${STATUS_COLOUR[sOf(u)]};${sOf(u) === 'vacant' ? 'border:1.5px dashed #8A5A00' : ''}"></a>`).join('')}</div>
         ${legendHtml(['leased', 'soon', 'ended', 'expired', 'vacant', 'notready'])}</div></div>
       <div class="sec"><div class="sec-h">${t('largest')}</div><div class="card">${top.map(([k, v]) => `<div class="row"><div class="l"><b>${esc(k)}</b><small>${t('unitsN', {n: v.n})} · ${t('share', {p: pct(v.a, s.rent)})}</small></div><div class="r num">${fmt(v.a)}</div></div>`).join('')}</div></div>
     </div>`;
@@ -219,7 +221,7 @@ function planScreen(key) {
   const sel = fl.units.find(pu => pu.code === view.sel);
   const selReg = sel && sel.reg ? reg[sel.reg] : null;
   const chips = [['all', t('allUnits')], ['expired', t('expired') + ' ' + cnt('expired')], ['soon', t('soon') + ' ' + cnt('soon')], ['vacant', t('vacant') + ' ' + cnt('vacant')], ['fitout', t('fitout') + ' ' + cnt('fitout')]];
-  const sheet = sel ? (() => { const s = disp(sel); return `<div class="sheet"><div class="sec-h" style="align-items:flex-start"><div><div style="font-size:15px">${esc(sel.label)}</div>${selReg && selReg.tenant && selReg.tenant !== sel.label ? `<div class="note">${esc(selReg.tenant)}</div>` : ''}<div class="note">${esc(sel.code)}${sel.reg && sel.reg !== sel.code ? ' (' + esc(sel.reg) + ')' : ''}${sel.area ? ' · ' + sel.area + ' m²' : ''}</div></div><span class="pill ${PILL[s]}">${t(s)}</span></div>
+  const sheet = sel ? (() => { const s = disp(sel); return `<div class="sheet"><div class="sec-h" style="align-items:flex-start"><div><div style="font-size:15px">${esc(sel.label)}</div>${selReg && selReg.tenant && selReg.tenant !== sel.label ? `<div class="note">${esc(selReg.tenant)}</div>` : ''}<div class="note">${selReg ? esc(uno(selReg)) + ' · ' : ''}${esc(sel.code)}${sel.area ? ' · ' + sel.area + ' m²' : ''}</div></div><span class="pill ${PILL[s]}">${t(s)}</span></div>
       <div class="sec-h" style="font-size:13px;font-weight:500"><span class="muted" style="font-weight:500">${t('annualRent')} <b class="num" style="color:var(--ink);font-size:14px">${selReg && selReg.amount ? fmt(selReg.amount) : '—'}</b>${selReg && selReg.end ? ' · ' + t('ends', {d: dstr(selReg.end)}) : ''}</span></div>
       ${selReg ? `<a class="btn" href="#unit/${selReg.id}">${t('tenantDetails')}</a>` : `<div class="note">${t('fromRegister')}</div>`}</div>`; })() : `<div class="sheet note">${t('tapAny')}</div>`;
   return `<div class="top"><a class="back" href="#property/${key}">${chev()}${esc(pname(key))}</a><div><div class="title">${t('plan')}</div><div class="subtitle">${t('planHint')}</div></div>
@@ -244,12 +246,13 @@ function brandOf(u) {
 
 function unitScreen(id) {
   const u = D.units.find(x => String(x.id) === String(id)); if (!u) return home();
-  const s = sOf(u), d = daysTo(u.end), brand = brandOf(u);
-  return `<div class="top"><a class="back" href="#property/${u.property}">${chev()}${esc(pname(u.property))}</a><div><div class="title">${esc(brand || u.tenant || u.code)}</div>${brand && u.tenant && u.tenant !== brand ? `<div class="subtitle">${esc(u.tenant)}</div>` : ''}<div class="subtitle">${t('unitT')} <span class="num">${esc(u.code)}</span> · ${esc(u.unit_type || '')} · ${t(u.company)}</div></div>
+  const s = sOf(u), d = daysTo(u.end), brand = u.brand || brandOf(u);
+  return `<div class="top"><a class="back" href="#property/${u.property}">${chev()}${esc(pname(u.property))}</a><div><div class="title">${esc(u.brand || brand || u.tenant || uno(u))}</div>${brand && u.tenant && u.tenant !== brand ? `<div class="subtitle">${esc(u.tenant)}</div>` : ''}<div class="subtitle">${t('unitT')} <span class="num">${esc(uno(u))}</span> · ${esc(u.unit_type || '')} · ${t(u.company)}</div></div>
       <div class="sec-h" style="font-weight:500"><div><small style="opacity:.85;font-size:11px">${t('annualRent')}</small><div style="font-size:26px;font-weight:700">${u.amount ? N(u.amount) + ' ' + t('aed') : '—'}</div></div><span class="pill ${PILL[s]}" style="background:#fff">${t(s)}</span></div></div>
     <div class="wrap">
       <div class="sec"><div class="sec-h">${t('lease')}</div><div class="card">
         <div class="row"><span class="muted">${t('tawteeq')}</span><b class="num">${esc(u.contract || '—')}</b></div>
+        ${leaseRows(u)}
         <div class="row"><span class="muted">${t('term')}</span><b>${dstr(u.start)} – ${dstr(u.end)}</b></div>
         ${d != null ? `<div class="row"><span class="muted">${t('endsIn')}</span><span class="pill ${d < 0 ? 'red' : d <= 90 ? 'amber' : ''}">${d < 0 ? t('daysAgo', {n: -d}) : t('days', {n: d})}</span></div>` : ''}
         ${u.budget ? `<div class="row"><span class="muted">${t('budget')}</span><b class="num">${fmt(u.budget)}</b></div>` : ''}
@@ -257,7 +260,7 @@ function unitScreen(id) {
         ${u.note ? `<div class="row"><span class="muted">${t('note')}</span><span style="font-size:12px;text-align:end">${esc(u.note)}</span></div>` : ''}
         ${u.remark ? `<div class="row"><span class="muted">${t('remark')}</span><span style="font-size:12px;text-align:end">${esc(u.remark)}</span></div>` : ''}</div>
         ${u.edited_at ? `<div class="note">${t('corrected', {u: esc(u.edited_by), d: dstr(u.edited_at.slice(0, 10))})}</div>` : ''}</div>
-      <div class="sec"><div class="sec-h">${t('payments')}</div><div class="card pad note">${t('paySoon')}</div></div>
+      ${leaseFin(u) || `<div class="sec"><div class="sec-h">${t('payments')}</div><div class="card pad note">${t('paySoon')}</div></div>`}
     </div>`;
 }
 
@@ -269,11 +272,11 @@ function leasesScreen() {
   const passed = us.filter(u => u.status === 'Rented' && u.end && daysTo(u.end) < 0).sort((a, b) => daysTo(a.end) - daysTo(b.end));
   const tab = n => { const l = us.filter(u => u.status === 'Rented' && u.end && daysTo(u.end) >= 0 && daysTo(u.end) <= n);
     return `<button class="${win === n ? 'on' : ''}" onclick="view.win=${n};render()">${t('days', {n})}<br><span class="num">${l.length} · ${fmtM(l.reduce((s, u) => s + (u.amount || 0), 0))}</span></button>`; };
-  const row = (u, sub) => `<a class="row" href="#unit/${u.id}"><div class="l"><b>${esc(brandOf(u) || u.tenant || u.code)}</b><small>${esc(pname(u.property))} · <span class="num">${esc(u.code)}</span> · ${sub}</small>${u.renewal ? `<small><span class="pill">${esc(u.renewal)}</span></small>` : ''}</div><div class="r num">${fmt(u.amount)}</div></a>`;
+  const row = (u, sub) => `<a class="row" href="#unit/${u.id}"><div class="l"><b>${esc(brandOf(u) || u.tenant || uno(u))}</b><small>${esc(pname(u.property))} · <span class="num">${esc(uno(u))}</span> · ${sub}</small>${u.renewal ? `<small><span class="pill">${esc(u.renewal)}</span></small>` : ''}</div><div class="r num">${fmt(u.amount)}</div></a>`;
   return head(t('leasesTitle'), t('asOf', {d: dstr(D.as_of)}), null, coSeg() + `<div class="tabs3">${tab(30)}${tab(60)}${tab(90)}</div>`) + `<div class="wrap">
     <div class="sec"><div class="sec-h" style="color:var(--red)">${t('expiredNotRenewed')}<span class="num">${t('atRiskShort', {a: fmt(exp.reduce((s, u) => s + (u.amount || 0), 0))})}</span></div>
       <div class="card">${withT.map(u => row(u, u.end ? t('ends', {d: dstr(u.end)}) : t('expired'))).join('') || `<div class="row muted">${t('nothing')}</div>`}
-      ${noT.length ? `<div class="row note">${t('noTenant', {n: noT.length})} (<span class="num">${noT.map(u => esc(u.code)).join(', ')}</span>)</div>` : ''}</div></div>
+      ${noT.length ? `<div class="row note">${t('noTenant', {n: noT.length})} (<span class="num">${noT.map(u => esc(uno(u))).join(', ')}</span>)</div>` : ''}</div></div>
     <div class="sec"><div class="sec-h">${t('endingIn', {n: win})}<span class="muted">${ending.length}</span></div><div class="card">${ending.map(u => row(u, t('ends', {d: dstr(u.end)}))).join('') || `<div class="row muted">${t('nothing')}</div>`}</div></div>
     ${passed.length ? `<div class="sec"><div class="sec-h" style="color:var(--amber)">${t('passed')}<span class="muted">${passed.length}</span></div><div class="card">${passed.map(u => row(u, t('ends', {d: dstr(u.end)}))).join('')}</div></div>` : ''}
   </div>`;
@@ -288,13 +291,9 @@ function vacancyScreen() {
       <div class="kpis"><div><small>${t('vacant')}</small><b class="num">${vac.length}</b></div><div><small>${t('perYear')}</small><b class="num">${fmt(total)}</b></div><div><small>${t('perMonth')}</small><b class="num">${fmt(total / 12)}</b></div></div></div>
     <div class="wrap">${Object.entries(byP).sort((a, b) => b[1].reduce((s, u) => s + (u.budget || 0), 0) - a[1].reduce((s, u) => s + (u.budget || 0), 0)).map(([k, list]) => `
       <div class="sec"><div class="sec-h">${esc(pname(k))}<span class="muted"><span class="num">${fmt(list.reduce((s, u) => s + (u.budget || 0), 0))}</span></span></div><div class="card">
-        ${list.sort((a, b) => (b.budget || 0) - (a.budget || 0)).map(u => `<a class="row" href="#unit/${u.id}"><div class="l"><b class="num">${esc(u.code)}</b><small>${esc(u.unit_type || '')}</small></div><div class="r num">${u.budget ? fmt(u.budget) : '—'}</div></a>`).join('')}</div></div>`).join('') || `<div class="empty">${t('nothing')}</div>`}
+        ${list.sort((a, b) => (b.budget || 0) - (a.budget || 0)).map(u => `<a class="row" href="#unit/${u.id}"><div class="l"><b class="num">${esc(uno(u))}</b><small>${esc(u.unit_type || '')}</small></div><div class="r num">${u.budget ? fmt(u.budget) : '—'}</div></a>`).join('')}</div></div>`).join('') || `<div class="empty">${t('nothing')}</div>`}
       ${Object.entries(nrP).map(([k, n]) => `<div class="dark"><div><small>${t('notReadyUnits')}</small><div style="font-weight:700">${n} · ${esc(pname(k))}</div></div></div>`).join('')}
     </div>`;
-}
-
-function collectionsScreen() {
-  return head(t('collTitle'), t('collSub'), null, coSeg()) + `<div class="wrap"><div class="card pad note" style="font-size:13px;line-height:1.5">${t('collSoon')}</div></div>`;
 }
 
 function reportsScreen() {
@@ -359,7 +358,8 @@ async function render() {
   if (!D) { $('#root').innerHTML = `<div class="app">${head(t('org'))}<div class="empty">…</div></div>`; return; }
   if (D.empty) { $('#root').innerHTML = `<div class="app">${head(t('org'))}<div class="empty">${t('empty')}<br><br>${t('uploadHint')}${user.role === 'admin' ? `<br><br><a class="btn" href="#admin">${t('admin')}</a>` : ''}</div></div>`; return; }
   const screens = {home: [home, 'home'], properties: [propertiesScreen, 'properties'], property: [() => propertyScreen(arg), 'properties'], plan: [() => planScreen(arg), 'properties'],
-                   unit: [() => unitScreen(arg), 'properties'], leases: [leasesScreen, 'leases'], vacancy: [vacancyScreen, 'home'], collections: [collectionsScreen, 'collections'], reports: [reportsScreen, 'reports']};
+                   unit: [() => unitScreen(arg), 'properties'], leases: [leasesScreen, 'leases'], vacancy: [vacancyScreen, 'home'], collections: [collectionsScreen, 'collections'], bounced: [bouncedScreen, 'collections'], income: [incomeScreen, 'more'], deposits: [depositsScreen, 'more'],
+                   docs: [docsScreen, 'more'], more: [moreScreen, 'more'], reports: [moreScreen, 'more']};
   const [fn, tab] = screens[route] || screens.home;
   const banner = (notice ? `<div class="wrap"><div class="msg">${t(notice)}</div></div>` : '') + (D._offline ? `<div class="wrap"><div class="msg bad">${t('offlineR')}</div></div>` : '');
   $('#root').innerHTML = `<div class="app ${route === 'plan' ? 'wide' : ''}">${fn()}${banner}</div>${nav(tab)}`;
@@ -379,7 +379,7 @@ async function load() {
 }
 let lastRoute = '';
 window.addEventListener('hashchange', () => { if (/^#p=/.test(location.hash)) return location.reload(); const r = location.hash.split('/')[0]; if (r !== lastRoute) { view = {}; flash = null; window.scrollTo(0, 0); } lastRoute = r; menuOpen = false; render(); });
-(async () => {
+window.addEventListener('DOMContentLoaded', async () => {   // after fin.js has loaded
   if (REMOTE) {
     if (takePairingFromUrl() && !isStandalone()) notice = 'installHint';
     if (!/^#\w/.test(location.hash) || /^#p=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search + (navigator.standalone ? '#home' : location.hash));
@@ -387,4 +387,4 @@ window.addEventListener('hashchange', () => { if (/^#p=/.test(location.hash)) re
     lastRoute = location.hash.split('/')[0]; render(); if (user) load(); return;
   }
   try { user = (await api('/api/me')).user; } catch (e) { user = null; } lastRoute = location.hash.split('/')[0]; render(); if (user) load();
-})();
+});
