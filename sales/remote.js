@@ -2,7 +2,7 @@
 // The key reaches the phone only through the pairing QR code (URL fragment, never sent to any server). This page holds no figures.
 'use strict';
 (function () {
-  const PAIR = 'bsa_pair', APP_V = '1';
+  const PAIR = 'bsa_pair', APP_V = '2';
   const $app = document.getElementById('app');
   const b64d = (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); s += '='.repeat((4 - s.length % 4) % 4); return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
   const cat = (...a) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of a) { o.set(x, i); i += x.length; } return o; };
@@ -59,6 +59,28 @@
       return basket[k] || { available: false };
     }
     throw new Error('Not available on the phone.');
+  };
+
+  // "figures updated" notifications (iPhone: only from the home-screen icon, iOS 16.4+)
+  const PUSH = 'bsa_push';
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  const pushOk = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  window.BSA_PUSH = {
+    available: () => !!(index && index.push),
+    isOn: () => { try { return !!localStorage.getItem(PUSH) && Notification.permission === 'granted'; } catch (e) { return false; } },
+    async enable() {
+      const c = index.push;
+      if (!pushOk()) { const e = new Error('install'); e.code = 'install'; throw e; }
+      if (await Notification.requestPermission() !== 'granted') { const e = new Error('denied'); e.code = 'denied'; throw e; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64d(c.vapid) });
+      const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)) + '.json';
+      const h = { apikey: c.key, 'Content-Type': 'application/json' };
+      if (!c.key.startsWith('sb_')) h.Authorization = 'Bearer ' + c.key;
+      const r = await fetch(c.url + '/storage/v1/object/' + c.bucket + '/' + c.folder + '/' + id, { method: 'POST', headers: h, body: JSON.stringify({ endpoint: sub.endpoint, phone: (getPair() || {}).n || '', at: new Date().toISOString() }) });
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (await r.text()).slice(0, 120));
+      localStorage.setItem(PUSH, id);
+    },
   };
 
   function startApp() { const s = document.createElement('script'); s.src = 'app.js?v=' + APP_V; document.body.appendChild(s); }

@@ -143,6 +143,7 @@
       </div></div>
       <div class="wrap">
         ${t.notPosted.length ? `<div class="notice">${L.notPosted(t.notPosted.map(bName).join(', '))}</div>` : ''}
+        ${window.BSA_PUSH && window.BSA_PUSH.available() && !window.BSA_PUSH.isOn() ? `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px">${L.notifyHint}</span><button class="smbtn" data-act="push">${L.notifyOn}</button></div>` : ""}
         <div class="sectitle">${L.whatToKnow}</div>
         <div class="card" style="padding:2px 14px">${keys.map((k) => `<a class="key" href="${k.href}"><div class="ic" style="background:${k.bg};color:${k.fg}">${k.ic}</div><div><div class="t">${esc(k.t)}</div><div class="s num">${esc(k.s)}</div></div></a>`).join('')}</div>
         <div class="sectitle"><span>${L.branches}</span><a href="#/branches" style="font-size:13px">${L.seeAll}</a></div>
@@ -395,6 +396,7 @@
         <div class="row"><span class="sub">${L.lastSync}</span><span class="num" style="font-size:13px">${m.lastSync ? new Date(m.lastSync).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–'}</span></div>
         <div class="row"><span class="sub">${L.latestComplete}</span><span class="num" style="font-size:13px">${m.latestComplete ? esc(dShort(m.latestComplete)) : '–'}</span></div>
         <div class="row"><span class="sub">${L.latestDay}</span><span class="num" style="font-size:13px">${m.latest ? esc(dShort(m.latest)) : '–'}</span></div>
+        ${window.BSA_PUSH && window.BSA_PUSH.available() ? `<div class="row"><span class="sub">${L.notifyTitle}</span>${window.BSA_PUSH.isOn() ? `<span style="font-size:13px;font-weight:600;color:var(--brand)">✓ ${L.notifyIsOn}</span>` : `<button class="smbtn" data-act="push">${L.notifyOn}</button>`}</div>` : ""}
         <div class="row"><span class="sub">${L.language}</span>${langToggle().replace('class="lang"', 'class="lang" style="background:var(--soft)"').replace(/color:#fff/g, '')}</div>
         ${window.BSA_REMOTE ? "" : `<div class="row"><span></span><button class="smbtn" data-act="logout">${L.signOut}</button></div>`}</div></div>`;
   };
@@ -675,6 +677,7 @@
     if (a === 'fv') { S.fvVeg = v === '1'; return render(); }
     if (a === 'bkp') { S.bkPeriod = v; return render(); }
     if (a === 'mview') { S.mview = v; return render(); }
+    if (a === 'push') { const L = T(); try { await window.BSA_PUSH.enable(); } catch (x) { window.alert(x.code === 'install' ? L.notifyInstall : x.code === 'denied' ? L.notifyDenied : L.notifyFail + ' ' + x.message); } return render(); }
     if (a.startsWith('dbd') && S.dbdS) {
       const st = S.dbdS;
       if (a === 'dbdm') { st.m += +v; if (st.m < 0) { st.m = 11; st.y--; } if (st.m > 11) { st.m = 0; st.y++; } st.open = st.cell = null; }
