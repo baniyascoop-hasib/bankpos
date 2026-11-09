@@ -37,7 +37,7 @@
   async function get(name) {
     const p = getPair();
     const r = await fetch(p.u + '/' + name + '?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) throw new Error(name === 'index.json' ? 'This phone needs a new QR code from the office.' : 'This day is not available on the phone yet.');
+    if (!r.ok) throw new Error(name === 'index.json' ? 'The phone copy is not ready yet. Please try again shortly.' : 'This day is not available on the phone yet.');
     return decrypt(p.k, await r.json());
   }
   async function day(d) { if (!days.has(d)) days.set(d, await get('d-' + d + '.json')); return days.get(d); }
