@@ -546,7 +546,7 @@
           <div class="dd ${x.wd === 6 || x.wd === 0 ? 'we' : ''}"><b class="num">${String(x.d).padStart(2, '0')}</b><span>${L.wdShort[x.wd]}</span></div>
           <div class="bars" dir="ltr">${years.map((k, n) => { const vv = val(back(x.i, k, x.ds), cs) || 0; return `<div class="bar" style="width:${Math.max(1, vv / mx * 100)}%;background:${YC[n]}"></div>`; }).join('')}
             <div dir="auto">${ev ? `<span class="dbd-evt">${ev}</span> ` : ''}${evL && evL !== ev ? `<span class="dbd-evt ly">${ly}: ${evL}</span>` : ''}</div></div>
-          <div class="rv"><b class="num">${posted ? fmt(v) : L.notPosted}</b>${chip(q)}</div></button>`;
+          <div class="rv"><b class="num">${posted ? fmt(v) : L.dbdNotPosted}</b>${chip(q)}</div></button>`;
         if (st.open === x.ds) {
           const bA = cs.reduce((s, c) => s + X.bills[c][x.i], 0), bB = j >= 0 ? cs.reduce((s, c) => s + (X.bills[c][j] || 0), 0) : 0;
           h += `<div class="dbd-det"><table><tr><th>${L.wdShort[x.wd]} ${x.d} ${L.mon[st.m]}</th>${years.map((k) => `<th>${st.y - k}</th>`).join('')}<th>${L.vsY(ly)}</th></tr>

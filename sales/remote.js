@@ -2,7 +2,7 @@
 // The key reaches the phone only through the pairing QR code (URL fragment, never sent to any server). This page holds no figures.
 'use strict';
 (function () {
-  const PAIR = 'bsa_pair', APP_V = '2';
+  const PAIR = 'bsa_pair', APP_V = '3';
   const $app = document.getElementById('app');
   const b64d = (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); s += '='.repeat((4 - s.length % 4) % 4); return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
   const cat = (...a) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of a) { o.set(x, i); i += x.length; } return o; };
